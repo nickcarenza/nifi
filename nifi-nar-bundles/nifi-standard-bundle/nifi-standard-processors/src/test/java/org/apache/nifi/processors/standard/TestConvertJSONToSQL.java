@@ -83,7 +83,7 @@ public class TestConvertJSONToSQL {
         out.assertAttributeEquals("sql.args.3.type", String.valueOf(java.sql.Types.INTEGER));
         out.assertAttributeEquals("sql.args.3.value", "48");
 
-        out.assertContentEquals("INSERT INTO PERSONS (ID, NAME, CODE) VALUES (?, ?, ?)");
+        out.assertContentEquals("INSERT INTO \"PERSONS\" (ID, NAME, CODE) VALUES (?, ?, ?)");
     }
 
     @Test
@@ -120,7 +120,7 @@ public class TestConvertJSONToSQL {
         out.assertAttributeEquals("sql.args.3.type", String.valueOf(java.sql.Types.INTEGER));
         out.assertAttributeEquals("sql.args.3.value", "48");
 
-        out.assertContentEquals("INSERT INTO PERSONS (\"ID\", \"NAME\", \"CODE\") VALUES (?, ?, ?)");
+        out.assertContentEquals("INSERT INTO \"PERSONS\" (\"ID\", \"NAME\", \"CODE\") VALUES (?, ?, ?)");
     }
 
     @Test
@@ -155,7 +155,7 @@ public class TestConvertJSONToSQL {
         out.assertAttributeEquals("sql.args.3.type", String.valueOf(java.sql.Types.INTEGER));
         out.assertAttributeNotExists("sql.args.3.value");
 
-        out.assertContentEquals("INSERT INTO PERSONS (ID, NAME, CODE) VALUES (?, ?, ?)");
+        out.assertContentEquals("INSERT INTO \"PERSONS\" (ID, NAME, CODE) VALUES (?, ?, ?)");
     }
 
 
@@ -191,7 +191,7 @@ public class TestConvertJSONToSQL {
         out.assertAttributeEquals("sql.args.3.type", String.valueOf(java.sql.Types.INTEGER));
         out.assertAttributeEquals("sql.args.3.value", "1");
 
-        out.assertContentEquals("UPDATE PERSONS SET NAME = ?, CODE = ? WHERE ID = ?");
+        out.assertContentEquals("UPDATE \"PERSONS\" SET NAME = ?, CODE = ? WHERE ID = ?");
     }
 
 
@@ -221,7 +221,7 @@ public class TestConvertJSONToSQL {
         runner.assertTransferCount(ConvertJSONToSQL.REL_SQL, 5);
         final List<MockFlowFile> mffs = runner.getFlowFilesForRelationship(ConvertJSONToSQL.REL_SQL);
         for (final MockFlowFile mff : mffs) {
-            mff.assertContentEquals("INSERT INTO PERSONS (ID, NAME, CODE) VALUES (?, ?, ?)");
+            mff.assertContentEquals("INSERT INTO \"PERSONS\" (ID, NAME, CODE) VALUES (?, ?, ?)");
 
             for (int i=1; i <= 3; i++) {
                 mff.assertAttributeExists("sql.args." + i + ".type");
@@ -257,7 +257,7 @@ public class TestConvertJSONToSQL {
         runner.assertTransferCount(ConvertJSONToSQL.REL_SQL, 5);
         final List<MockFlowFile> mffs = runner.getFlowFilesForRelationship(ConvertJSONToSQL.REL_SQL);
         for (final MockFlowFile mff : mffs) {
-            mff.assertContentEquals("INSERT INTO PERSONS (\"ID\", \"NAME\", \"CODE\") VALUES (?, ?, ?)");
+            mff.assertContentEquals("INSERT INTO \"PERSONS\" (\"ID\", \"NAME\", \"CODE\") VALUES (?, ?, ?)");
 
             for (int i=1; i <= 3; i++) {
                 mff.assertAttributeExists("sql.args." + i + ".type");
@@ -298,7 +298,7 @@ public class TestConvertJSONToSQL {
         out.assertAttributeEquals("sql.args.3.type", String.valueOf(java.sql.Types.INTEGER));
         out.assertAttributeEquals("sql.args.3.value", "1");
 
-        out.assertContentEquals("UPDATE PERSONS SET NAME = ?, CODE = ? WHERE ID = ?");
+        out.assertContentEquals("UPDATE \"PERSONS\" SET NAME = ?, CODE = ? WHERE ID = ?");
     }
 
     @Test
@@ -334,7 +334,7 @@ public class TestConvertJSONToSQL {
         out.assertAttributeEquals("sql.args.3.type", String.valueOf(java.sql.Types.INTEGER));
         out.assertAttributeEquals("sql.args.3.value", "1");
 
-        out.assertContentEquals("UPDATE PERSONS SET \"NAME\" = ?, \"CODE\" = ? WHERE \"ID\" = ?");
+        out.assertContentEquals("UPDATE \"PERSONS\" SET \"NAME\" = ?, \"CODE\" = ? WHERE \"ID\" = ?");
     }
 
     @Test
@@ -364,7 +364,7 @@ public class TestConvertJSONToSQL {
         runner.assertTransferCount(ConvertJSONToSQL.REL_SQL, 1);
         final MockFlowFile out = runner.getFlowFilesForRelationship(ConvertJSONToSQL.REL_SQL).get(0);
 
-        out.assertContentEquals("INSERT INTO PERSONS (ID, NAME, CODE) VALUES (?, ?, ?)");
+        out.assertContentEquals("INSERT INTO \"PERSONS\" (ID, NAME, CODE) VALUES (?, ?, ?)");
 
         runner.clearTransferState();
         runner.setProperty(ConvertJSONToSQL.UNMATCHED_FIELD_BEHAVIOR, ConvertJSONToSQL.FAIL_UNMATCHED_FIELD.getValue());
@@ -406,7 +406,7 @@ public class TestConvertJSONToSQL {
         out.assertAttributeEquals("sql.args.3.type", String.valueOf(java.sql.Types.INTEGER));
         out.assertAttributeEquals("sql.args.3.value", "48");
 
-        out.assertContentEquals("UPDATE PERSONS SET ID = ?, NAME = ? WHERE CODE = ?");
+        out.assertContentEquals("UPDATE \"PERSONS\" SET ID = ?, NAME = ? WHERE CODE = ?");
     }
 
     @Test
@@ -443,7 +443,7 @@ public class TestConvertJSONToSQL {
         out.assertAttributeEquals("sql.args.3.type", String.valueOf(java.sql.Types.INTEGER));
         out.assertAttributeEquals("sql.args.3.value", "48");
 
-        out.assertContentEquals("UPDATE PERSONS SET \"ID\" = ?, \"NAME\" = ? WHERE \"CODE\" = ?");
+        out.assertContentEquals("UPDATE \"PERSONS\" SET \"ID\" = ?, \"NAME\" = ? WHERE \"CODE\" = ?");
     }
 
     @Test
@@ -481,7 +481,7 @@ public class TestConvertJSONToSQL {
         out.assertAttributeEquals("sql.args.3.type", String.valueOf(java.sql.Types.INTEGER));
         out.assertAttributeEquals("sql.args.3.value", "48");
 
-        out.assertContentEquals("UPDATE PERSONS SET ID = ? WHERE NAME = ? AND CODE = ?");
+        out.assertContentEquals("UPDATE \"PERSONS\" SET ID = ? WHERE NAME = ? AND CODE = ?");
     }
 
     @Test
@@ -617,7 +617,7 @@ public class TestConvertJSONToSQL {
         out.assertAttributeEquals("sql.args.3.type", String.valueOf(java.sql.Types.INTEGER));
         out.assertAttributeEquals("sql.args.3.value", "48");
 
-        out.assertContentEquals("INSERT INTO PERSONS (ID, NAME, CODE) VALUES (?, ?, ?)");
+        out.assertContentEquals("INSERT INTO \"PERSONS\" (ID, NAME, CODE) VALUES (?, ?, ?)");
     } // End testInsertWithMissingColumnWarning()
 
     @Test
@@ -653,7 +653,7 @@ public class TestConvertJSONToSQL {
         out.assertAttributeEquals("sql.args.3.type", String.valueOf(java.sql.Types.INTEGER));
         out.assertAttributeEquals("sql.args.3.value", "48");
 
-        out.assertContentEquals("INSERT INTO PERSONS (ID, NAME, CODE) VALUES (?, ?, ?)");
+        out.assertContentEquals("INSERT INTO \"PERSONS\" (ID, NAME, CODE) VALUES (?, ?, ?)");
     } // End testInsertWithMissingColumnIgnore()
 
     @Test
@@ -716,7 +716,7 @@ public class TestConvertJSONToSQL {
         out.assertAttributeEquals("sql.args.3.type", String.valueOf(java.sql.Types.INTEGER));
         out.assertAttributeEquals("sql.args.3.value", "48");
 
-        out.assertContentEquals("UPDATE PERSONS SET ID = ? WHERE NAME = ? AND CODE = ?");
+        out.assertContentEquals("UPDATE \"PERSONS\" SET ID = ? WHERE NAME = ? AND CODE = ?");
 
     } // End testUpdateWithMissingColumnWarning()
 
@@ -754,7 +754,7 @@ public class TestConvertJSONToSQL {
         out.assertAttributeEquals("sql.args.3.type", String.valueOf(java.sql.Types.INTEGER));
         out.assertAttributeEquals("sql.args.3.value", "48");
 
-        out.assertContentEquals("UPDATE PERSONS SET ID = ? WHERE NAME = ? AND CODE = ?");
+        out.assertContentEquals("UPDATE \"PERSONS\" SET ID = ? WHERE NAME = ? AND CODE = ?");
 
     } // End testUpdateWithMissingColumnIgnore()
 
