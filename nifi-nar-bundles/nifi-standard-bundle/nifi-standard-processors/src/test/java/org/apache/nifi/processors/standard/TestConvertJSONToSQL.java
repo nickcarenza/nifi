@@ -120,7 +120,7 @@ public class TestConvertJSONToSQL {
         out.assertAttributeEquals("sql.args.3.type", String.valueOf(java.sql.Types.INTEGER));
         out.assertAttributeEquals("sql.args.3.value", "48");
 
-        out.assertContentEquals("INSERT INTO \"PERSONS\"" (\"ID\", \"NAME\", \"CODE\") VALUES (?, ?, ?)");
+        out.assertContentEquals("INSERT INTO \"PERSONS\" (\"ID\", \"NAME\", \"CODE\") VALUES (?, ?, ?)");
     }
 
     @Test
