@@ -420,7 +420,11 @@ public class ConvertJSONToSQL extends AbstractProcessor {
 
         final StringBuilder sqlBuilder = new StringBuilder();
         int fieldCount = 0;
-        sqlBuilder.append("INSERT INTO ").append(tableName).append(" (");
+        sqlBuilder.append("INSERT INTO ");
+        sqlBuilder.append(schema.getQuotedIdentifierString())
+        sqlBuilder.append(tableName)
+        sqlBuilder.append(schema.getQuotedIdentifierString())
+        sqlBuilder.append(" (");
 
         // iterate over all of the elements in the JSON, building the SQL statement by adding the column names, as well as
         // adding the column value to a "sql.args.N.value" attribute and the type of a "sql.args.N.type" attribute add the
@@ -500,7 +504,11 @@ public class ConvertJSONToSQL extends AbstractProcessor {
 
         final StringBuilder sqlBuilder = new StringBuilder();
         int fieldCount = 0;
-        sqlBuilder.append("UPDATE ").append(tableName).append(" SET ");
+        sqlBuilder.append("UPDATE ")
+        sqlBuilder.append(schema.getQuotedIdentifierString())
+        sqlBuilder.append(tableName)
+        sqlBuilder.append(schema.getQuotedIdentifierString())
+        sqlBuilder.append(" SET ");
 
 
         // Create a Set of all normalized Update Key names, and ensure that there is a field in the JSON
