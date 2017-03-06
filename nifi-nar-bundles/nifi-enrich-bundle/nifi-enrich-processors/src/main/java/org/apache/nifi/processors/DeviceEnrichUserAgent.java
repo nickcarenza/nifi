@@ -133,7 +133,7 @@ public class DeviceEnrichUserAgent extends AbstractProcessor {
     public static final PropertyDescriptor USER_AGENT_ATTRIBUTE = new PropertyDescriptor.Builder()
             .name("User Agent Attribute")
             .required(true)
-            .description("The name of an attribute whose value is user agent for which enrichment should occur")
+            .description("The name of an attribute whose value is a user agent for which enrichment should occur")
             .defaultValue("device")
             .addValidator(StandardValidators.ATTRIBUTE_KEY_VALIDATOR)
             .build();
