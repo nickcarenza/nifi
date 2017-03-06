@@ -68,25 +68,25 @@ import net.sf.uadetector.UserAgentStringParser;
         + "'User Agent Attribute' property. If the name of the attribute provided is 'X', then the the attributes added by enrichment "
         + "will take the form X.device.<fieldName>")
 @WritesAttributes({
-    @WritesAttribute(attribute = "X.device.lookup.micros",        description = "The number of microseconds that the device lookup took"),
-    @WritesAttribute(attribute = "X.device.category",             description = "The category identified for the User Agent"),
-    @WritesAttribute(attribute = "X.device.family",               description = "The family identified for this User Agent"),
-    @WritesAttribute(attribute = "X.device.name",                 description = "The name identified for this User Agent"),
-    @WritesAttribute(attribute = "X.device.producer",             description = "The producer identified for this User Agent"),
-    @WritesAttribute(attribute = "X.device.type",                 description = "The type for this User Agent"),
-    @WritesAttribute(attribute = "X.device.version.full",         description = "The user agent version (full) for this User Agent"),
-    @WritesAttribute(attribute = "X.device.version.major",        description = "The user agent version (major) for this User Agent"),
-    @WritesAttribute(attribute = "X.device.version.minor",        description = "The user agent version (minor) for this User Agent"),
-    @WritesAttribute(attribute = "X.device.version.bugfix",       description = "The user agent version (bugfix) for this User Agent"),
-    @WritesAttribute(attribute = "X.device.version.extension",    description = "The user agent version (extension) for this User Agent"),
-    @WritesAttribute(attribute = "X.device.os.family",            description = "The os family for this User Agent"),
-    @WritesAttribute(attribute = "X.device.os.name",              description = "The os name for this User Agent"),
-    @WritesAttribute(attribute = "X.device.os.producer",          description = "The os producer for this User Agent"),
-    @WritesAttribute(attribute = "X.device.os.version.full",      description = "The os version (full) for this User Agent"),
-    @WritesAttribute(attribute = "X.device.os.version.major",     description = "The os version (major) for this User Agent"),
-    @WritesAttribute(attribute = "X.device.os.version.minor",     description = "The os version (minor) for this User Agent"),
-    @WritesAttribute(attribute = "X.device.os.version.bugfix",    description = "The os version (bugfix) for this User Agent"),
-    @WritesAttribute(attribute = "X.device.os.version.extension", description = "The os version (extension) for this User Agent"),})
+    @WritesAttribute(attribute = "X.lookup.micros",        description = "The number of microseconds that the device lookup took"),
+    @WritesAttribute(attribute = "X.category",             description = "The category identified for the User Agent"),
+    @WritesAttribute(attribute = "X.family",               description = "The family identified for this User Agent"),
+    @WritesAttribute(attribute = "X.name",                 description = "The name identified for this User Agent"),
+    @WritesAttribute(attribute = "X.producer",             description = "The producer identified for this User Agent"),
+    @WritesAttribute(attribute = "X.type",                 description = "The type for this User Agent"),
+    @WritesAttribute(attribute = "X.version.full",         description = "The user agent version (full) for this User Agent"),
+    @WritesAttribute(attribute = "X.version.major",        description = "The user agent version (major) for this User Agent"),
+    @WritesAttribute(attribute = "X.version.minor",        description = "The user agent version (minor) for this User Agent"),
+    @WritesAttribute(attribute = "X.version.bugfix",       description = "The user agent version (bugfix) for this User Agent"),
+    @WritesAttribute(attribute = "X.version.extension",    description = "The user agent version (extension) for this User Agent"),
+    @WritesAttribute(attribute = "X.os.family",            description = "The os family for this User Agent"),
+    @WritesAttribute(attribute = "X.os.name",              description = "The os name for this User Agent"),
+    @WritesAttribute(attribute = "X.os.producer",          description = "The os producer for this User Agent"),
+    @WritesAttribute(attribute = "X.os.version.full",      description = "The os version (full) for this User Agent"),
+    @WritesAttribute(attribute = "X.os.version.major",     description = "The os version (major) for this User Agent"),
+    @WritesAttribute(attribute = "X.os.version.minor",     description = "The os version (minor) for this User Agent"),
+    @WritesAttribute(attribute = "X.os.version.bugfix",    description = "The os version (bugfix) for this User Agent"),
+    @WritesAttribute(attribute = "X.os.version.extension", description = "The os version (extension) for this User Agent"),})
 public class DeviceEnrichUserAgent extends AbstractProcessor {
 
     /*
@@ -134,7 +134,7 @@ public class DeviceEnrichUserAgent extends AbstractProcessor {
             .name("User Agent Attribute")
             .required(true)
             .description("The name of an attribute whose value is user agent for which enrichment should occur")
-            .defaultValue("Resource Module Parser")
+            .defaultValue("device")
             .addValidator(StandardValidators.ATTRIBUTE_KEY_VALIDATOR)
             .build();
 
@@ -148,7 +148,7 @@ public class DeviceEnrichUserAgent extends AbstractProcessor {
                     + "When newer data available, it automatically loads and updates it."),
                 new AllowableValue(RESOURCE_MODULE_PARSER, "Parser with no updating functions. "
                     + "The database is loaded once during initialization."))
-            .defaultValue("Resource Module Parser")
+            .defaultValue(RESOURCE_MODULE_PARSER)
             .description("Whether to enable caching and updating for the parser.")
             .addValidator(StandardValidators.NON_EMPTY_VALIDATOR)
             .build();
@@ -180,9 +180,10 @@ public class DeviceEnrichUserAgent extends AbstractProcessor {
 
     @OnScheduled
     public final void onScheduled(final ProcessContext context) throws IOException {
-        final String parserString = context.getProperty(USER_AGENT_PARSER).getValue();
         final StopWatch stopWatch = new StopWatch(true);
         final UserAgentStringParser parser;
+        
+        final String parserString = context.getProperty(USER_AGENT_PARSER).getValue();
         switch (parserString) {
             case CACHING_AND_UPDATING_PARSER:
                 parser = UADetectorServiceFactory.getCachingAndUpdatingParser();
@@ -194,6 +195,7 @@ public class DeviceEnrichUserAgent extends AbstractProcessor {
                 parser = UADetectorServiceFactory.getResourceModuleParser();
                 break;
         }
+
         stopWatch.stop();
         getLogger().info("Completed loading of UAS Database.  Elapsed time was {} milliseconds.", new Object[]{stopWatch.getDuration(TimeUnit.MILLISECONDS)});
         parserRef.set(parser);
@@ -238,8 +240,6 @@ public class DeviceEnrichUserAgent extends AbstractProcessor {
             session.transfer(flowFile, REL_NOT_FOUND);
             return;
         }
-
-
 
         final Map<String, String> attrs = new HashMap<>();
         attrs.put(new StringBuilder(userAgentAttributeName).append(".device.lookup.micros").toString(), String.valueOf(stopWatch.getDuration(TimeUnit.MICROSECONDS)));
