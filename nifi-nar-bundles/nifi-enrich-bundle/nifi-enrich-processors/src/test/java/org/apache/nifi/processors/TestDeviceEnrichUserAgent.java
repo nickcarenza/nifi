@@ -39,6 +39,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
@@ -49,19 +52,34 @@ import static org.powermock.api.mockito.PowerMockito.mock;
 import static org.powermock.api.mockito.PowerMockito.mockStatic;
 
 import net.sf.uadetector.service.UADetectorServiceFactory;
+import net.sf.uadetector.ReadableUserAgent;
 import net.sf.uadetector.UserAgent;
+import net.sf.uadetector.UserAgentType;
 import net.sf.uadetector.UserAgentStringParser;
+import net.sf.uadetector.ReadableDeviceCategory;
+import net.sf.uadetector.UserAgentFamily;
+import net.sf.uadetector.VersionNumber;
+import net.sf.uadetector.OperatingSystem;
+import net.sf.uadetector.OperatingSystemFamily;
 
 @RunWith(PowerMockRunner.class)
 @PrepareForTest({DeviceEnrichUserAgent.class})
 @SuppressWarnings("WeakerAccess")
 public class TestDeviceEnrichUserAgent {
+    
+    @Mock
+    private UADetectorServiceFactory uaDetectorServiceFactory;
+
+    @InjectMocks
+    private DeviceEnrichUserAgent deviceUserAgent;
+
     TestRunner testRunner;
 
     @Before
     public void setUp() throws Exception {
-        deviceEnrichUserAgent = new DeviceEnrichUserAgent();
-        testRunner = TestRunners.newTestRunner(deviceEnrichUserAgent);
+        MockitoAnnotations.initMocks(this);
+        deviceUserAgent = new DeviceEnrichUserAgent();
+        testRunner = TestRunners.newTestRunner(deviceUserAgent);
     }
 
     @Test
@@ -85,12 +103,34 @@ public class TestDeviceEnrichUserAgent {
         testRunner.setProperty(DeviceEnrichUserAgent.USER_AGENT_PARSER, DeviceEnrichUserAgent.RESOURCE_MODULE_PARSER);
         testRunner.setProperty(DeviceEnrichUserAgent.USER_AGENT_ATTRIBUTE, "user_agent");
 
-        final ReadableUserAgent result = getFullCityResponse();
+        DeviceEnrichUserAgent processor = (DeviceEnrichUserAgent)testRunner.getProcessor();
 
-        when(databaseReader.city(InetAddress.getByName("1.2.3.4"))).thenReturn(cityResponse);
+        final ReadableUserAgent result = new UserAgent(
+            "Amazo",
+            new DeviceCategory(ReadableDeviceCategory.Category.PERSONAL_COMPUTER),
+            UserAgentFamily.FIREFOX,
+            new OperatingSystem(
+                 OperatingSystemFamily.ANDROID,
+                 "Android",
+                 "ico.png",
+                 "iVo",
+                 "Professor Ivo",
+                 "www.IvyUniversity.edu",
+                 "www.android.com",
+                 new VersionNumber("0","6","9","2")
+            ),
+            new VersionNumber("1","2","3","4"),
+            UserAgentType.MOBILE_BROWSER
+        );
+
+        UserAgentStringParser parser = mock(UserAgentStringParser.class);
+        when(parser.parse("agent")).thenReturn(result);
+
+        mockStatic(UADetectorServiceFactory.class);
+        // when(UADetectorServiceFactory.getResourceModuleParser()).thenReturn();
 
         final Map<String, String> attributes = new HashMap<>();
-        attributes.put("ip", "1.2.3.4");
+        attributes.put("user_agent", "agent");
 
         testRunner.enqueue(new byte[0], attributes);
 
@@ -103,186 +143,73 @@ public class TestDeviceEnrichUserAgent {
         assertEquals(1, found.size());
 
         FlowFile finishedFound = found.get(0);
-        assertNotNull(finishedFound.getAttribute("ip.geo.lookup.micros"));
-        assertEquals("Minneapolis", finishedFound.getAttribute("ip.geo.city"));
-        assertEquals("44.98", finishedFound.getAttribute("ip.geo.latitude"));
-        assertEquals("93.2636", finishedFound.getAttribute("ip.geo.longitude"));
-        assertEquals("Minnesota", finishedFound.getAttribute("ip.geo.subdivision.0"));
-        assertEquals("MN", finishedFound.getAttribute("ip.geo.subdivision.isocode.0"));
-        assertNull(finishedFound.getAttribute("ip.geo.subdivision.1"));
-        assertEquals("TT", finishedFound.getAttribute("ip.geo.subdivision.isocode.1"));
-        assertEquals("United States of America", finishedFound.getAttribute("ip.geo.country"));
-        assertEquals("US", finishedFound.getAttribute("ip.geo.country.isocode"));
-        assertEquals("55401", finishedFound.getAttribute("ip.geo.postalcode"));
+        assertNotNull(finishedFound.getAttribute("user_agent.device.lookup.micros"));
+        
+        // assertEquals("Minneapolis", finishedFound.getAttribute("ip.geo.city"));
+        // assertEquals("44.98", finishedFound.getAttribute("ip.geo.latitude"));
+        // assertEquals("93.2636", finishedFound.getAttribute("ip.geo.longitude"));
+        // assertEquals("Minnesota", finishedFound.getAttribute("ip.geo.subdivision.0"));
+        // assertEquals("MN", finishedFound.getAttribute("ip.geo.subdivision.isocode.0"));
+        // assertNull(finishedFound.getAttribute("ip.geo.subdivision.1"));
+        // assertEquals("TT", finishedFound.getAttribute("ip.geo.subdivision.isocode.1"));
+        // assertEquals("United States of America", finishedFound.getAttribute("ip.geo.country"));
+        // assertEquals("US", finishedFound.getAttribute("ip.geo.country.isocode"));
+        // assertEquals("55401", finishedFound.getAttribute("ip.geo.postalcode"));
     }
 
-    @Test
-    public void successfulMaxMindResponseShouldFlowToFoundRelationshipWhenLatAndLongAreNotSet() throws Exception {
-        testRunner.setProperty(DeviceEnrichUserAgent.USER_AGENT_PARSER, DeviceEnrichUserAgent.RESOURCE_MODULE_PARSER);
-        testRunner.setProperty(DeviceEnrichUserAgent.USER_AGENT_ATTRIBUTE, "user_agent");
-
-        final CityResponse cityResponse = getNullLatAndLongCityResponse();
-
-        when(databaseReader.city(InetAddress.getByName("1.2.3.4"))).thenReturn(cityResponse);
-
-        final Map<String, String> attributes = new HashMap<>();
-        attributes.put("ip", "1.2.3.4");
-
-        testRunner.enqueue(new byte[0], attributes);
-
-        testRunner.run();
-
-        List<MockFlowFile> notFound = testRunner.getFlowFilesForRelationship(DeviceEnrichUserAgent.REL_NOT_FOUND);
-        List<MockFlowFile> found = testRunner.getFlowFilesForRelationship(DeviceEnrichUserAgent.REL_FOUND);
-
-        assertEquals(0, notFound.size());
-        assertEquals(1, found.size());
-
-        FlowFile finishedFound = found.get(0);
-        assertNotNull(finishedFound.getAttribute("ip.geo.lookup.micros"));
-        assertEquals("Minneapolis", finishedFound.getAttribute("ip.geo.city"));
-        assertNull(finishedFound.getAttribute("ip.geo.latitude"));
-        assertNull(finishedFound.getAttribute("ip.geo.longitude"));
-        assertEquals("Minnesota", finishedFound.getAttribute("ip.geo.subdivision.0"));
-        assertEquals("MN", finishedFound.getAttribute("ip.geo.subdivision.isocode.0"));
-        assertNull(finishedFound.getAttribute("ip.geo.subdivision.1"));
-        assertEquals("TT", finishedFound.getAttribute("ip.geo.subdivision.isocode.1"));
-        assertEquals("United States of America", finishedFound.getAttribute("ip.geo.country"));
-        assertEquals("US", finishedFound.getAttribute("ip.geo.country.isocode"));
-        assertEquals("55401", finishedFound.getAttribute("ip.geo.postalcode"));
+    private class DeviceCategory implements ReadableDeviceCategory {
+        private ReadableDeviceCategory.Category category;
+        DeviceCategory(ReadableDeviceCategory.Category _category) {
+            category = _category;
+        }
+        public ReadableDeviceCategory.Category getCategory() {
+            return category;
+        }
+        public String getName() {
+            return category.getName();
+        }
+        public String getIcon() {
+            return "";
+        }
+        public String getInfoUrl() {
+            return "";
+        }
     }
 
-    @Test
-    public void evaluatingExpressionLanguageShouldAndFindingIpFieldWithSuccessfulLookUpShouldFlowToFoundRelationship() throws Exception {
-        testRunner.setProperty(DeviceEnrichUserAgent.USER_AGENT_PARSER, DeviceEnrichUserAgent.RESOURCE_MODULE_PARSER);
-        testRunner.setProperty(DeviceEnrichUserAgent.USER_AGENT_ATTRIBUTE, "${ip.fields:substringBefore(',')}");
+    private class UserAgent implements ReadableUserAgent {
+        private String name;
+        private ReadableDeviceCategory category;
+        private UserAgentFamily family;
+        private OperatingSystem os;
+        private VersionNumber version;
+        private UserAgentType type;
+        
+        UserAgent(
+            String _name,
+            ReadableDeviceCategory _category,
+            UserAgentFamily _family,
+            OperatingSystem _os,
+            VersionNumber _version,
+            UserAgentType _type) {
+            name = _name;
+            category = _category;
+            family = _family;
+            os = _os;
+            version = _version;
+            type = _type;
+        }
 
-        final CityResponse cityResponse = getNullLatAndLongCityResponse();
-
-        when(databaseReader.city(InetAddress.getByName("1.2.3.4"))).thenReturn(cityResponse);
-
-        final Map<String, String> attributes = new HashMap<>();
-        attributes.put("ip.fields", "ip0,ip1,ip2");
-        attributes.put("ip0", "1.2.3.4");
-
-        testRunner.enqueue(new byte[0], attributes);
-
-        testRunner.run();
-
-        List<MockFlowFile> notFound = testRunner.getFlowFilesForRelationship(DeviceEnrichUserAgent.REL_NOT_FOUND);
-        List<MockFlowFile> found = testRunner.getFlowFilesForRelationship(DeviceEnrichUserAgent.REL_FOUND);
-
-        assertEquals(0, notFound.size());
-        assertEquals(1, found.size());
-
-        FlowFile finishedFound = found.get(0);
-        assertNotNull(finishedFound.getAttribute("ip0.geo.lookup.micros"));
-        assertEquals("Minneapolis", finishedFound.getAttribute("ip0.geo.city"));
-        assertNull(finishedFound.getAttribute("ip0.geo.latitude"));
-        assertNull(finishedFound.getAttribute("ip0.geo.longitude"));
-        assertEquals("Minnesota", finishedFound.getAttribute("ip0.geo.subdivision.0"));
-        assertEquals("MN", finishedFound.getAttribute("ip0.geo.subdivision.isocode.0"));
-        assertNull(finishedFound.getAttribute("ip0.geo.subdivision.1"));
-        assertEquals("TT", finishedFound.getAttribute("ip0.geo.subdivision.isocode.1"));
-        assertEquals("United States of America", finishedFound.getAttribute("ip0.geo.country"));
-        assertEquals("US", finishedFound.getAttribute("ip0.geo.country.isocode"));
-        assertEquals("55401", finishedFound.getAttribute("ip0.geo.postalcode"));
-    }
-
-    @Test
-    public void shouldFlowToNotFoundWhenNullResponseFromMaxMind() throws Exception {
-        testRunner.setProperty(DeviceEnrichUserAgent.USER_AGENT_PARSER, DeviceEnrichUserAgent.RESOURCE_MODULE_PARSER);
-        testRunner.setProperty(DeviceEnrichUserAgent.USER_AGENT_ATTRIBUTE, "user_agent");
-
-        when(databaseReader.city(InetAddress.getByName("1.2.3.4"))).thenReturn(null);
-
-        final Map<String, String> attributes = new HashMap<>();
-        attributes.put("ip", "1.2.3.4");
-
-        testRunner.enqueue(new byte[0], attributes);
-
-        testRunner.run();
-
-        List<MockFlowFile> notFound = testRunner.getFlowFilesForRelationship(DeviceEnrichUserAgent.REL_NOT_FOUND);
-        List<MockFlowFile> found = testRunner.getFlowFilesForRelationship(DeviceEnrichUserAgent.REL_FOUND);
-
-        assertEquals(1, notFound.size());
-        assertEquals(0, found.size());
-    }
-
-    @SuppressWarnings("unchecked")
-    @Test
-    public void shouldFlowToNotFoundWhenIOExceptionThrownFromMaxMind() throws Exception {
-        testRunner.setProperty(DeviceEnrichUserAgent.USER_AGENT_PARSER, DeviceEnrichUserAgent.RESOURCE_MODULE_PARSER);
-        testRunner.setProperty(DeviceEnrichUserAgent.USER_AGENT_ATTRIBUTE, "user_agent");
-
-        when(databaseReader.city(InetAddress.getByName("1.2.3.4"))).thenThrow(IOException.class);
-
-        final Map<String, String> attributes = new HashMap<>();
-        attributes.put("ip", "1.2.3.4");
-
-        testRunner.enqueue(new byte[0], attributes);
-
-        testRunner.run();
-
-        List<MockFlowFile> notFound = testRunner.getFlowFilesForRelationship(DeviceEnrichUserAgent.REL_NOT_FOUND);
-        List<MockFlowFile> found = testRunner.getFlowFilesForRelationship(DeviceEnrichUserAgent.REL_FOUND);
-
-        assertEquals(1, notFound.size());
-        assertEquals(0, found.size());
-    }
-
-    @SuppressWarnings("unchecked")
-    @Test
-    public void shouldFlowToNotFoundWhenGeoIp2ExceptionThrownFromMaxMind() throws Exception {
-        testRunner.setProperty(DeviceEnrichUserAgent.USER_AGENT_PARSER, DeviceEnrichUserAgent.RESOURCE_MODULE_PARSER);
-        testRunner.setProperty(DeviceEnrichUserAgent.USER_AGENT_ATTRIBUTE, "user_agent");
-
-        when(databaseReader.city(InetAddress.getByName("1.2.3.4"))).thenThrow(GeoIp2Exception.class);
-
-        final Map<String, String> attributes = new HashMap<>();
-        attributes.put("ip", "1.2.3.4");
-
-        testRunner.enqueue(new byte[0], attributes);
-
-        testRunner.run();
-
-        List<MockFlowFile> notFound = testRunner.getFlowFilesForRelationship(DeviceEnrichUserAgent.REL_NOT_FOUND);
-        List<MockFlowFile> found = testRunner.getFlowFilesForRelationship(DeviceEnrichUserAgent.REL_FOUND);
-
-        assertEquals(1, notFound.size());
-        assertEquals(0, found.size());
-    }
-
-    @SuppressWarnings("unchecked")
-    @Test
-    public void whenInetAddressThrowsUnknownHostFlowFileShouldBeSentToNotFound() throws Exception {
-        testRunner.setProperty(DeviceEnrichUserAgent.USER_AGENT_PARSER, DeviceEnrichUserAgent.RESOURCE_MODULE_PARSER);
-        testRunner.setProperty(DeviceEnrichUserAgent.USER_AGENT_ATTRIBUTE, "user_agent");
-
-        final Map<String, String> attributes = new HashMap<>();
-        attributes.put("ip", "somenonexistentdomain.comm");
-
-        when(InetAddress.getByName("somenonexistentdomain.comm")).thenThrow(UnknownHostException.class);
-
-        testRunner.enqueue(new byte[0], attributes);
-
-        testRunner.run();
-
-        List<MockFlowFile> notFound = testRunner.getFlowFilesForRelationship(DeviceEnrichUserAgent.REL_NOT_FOUND);
-        List<MockFlowFile> found = testRunner.getFlowFilesForRelationship(DeviceEnrichUserAgent.REL_FOUND);
-
-        assertEquals(1, notFound.size());
-        assertEquals(0, found.size());
-
-        verify(databaseReader).close();
-        verifyNoMoreInteractions(databaseReader);
-    }
-
-    // private MockResponse class 
-
-    private ReadableUserAgent getMockResponse() {
-        return 
+        public ReadableDeviceCategory getDeviceCategory() { return category; }
+        public UserAgentFamily getFamily() { return family; }
+        public VersionNumber getVersionNumber() { return version; }
+        public OperatingSystem getOperatingSystem() { return os; }
+        public UserAgentType getType() { return type; }
+        public String getTypeName() { return type.getName(); }
+        public String getProducer() { return ""; }
+        public String getUrl() { return ""; }
+        public String getProducerUrl(){ return ""; }
+        public String getName() { return name; }
+        public String getIcon() { return ""; }
     }
 
 }
